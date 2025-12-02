@@ -2,7 +2,7 @@
 name = "fretransformer"
 version = "0.1.0"
 description = "A Fourier Transformer implementation."
-authors = ["AmsonntagChow"]
+authors = [{name = "AmsonntagChow"}]
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [

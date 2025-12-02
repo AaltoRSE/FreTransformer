@@ -5,10 +5,20 @@ description = "A Fourier Transformer implementation."
 authors = ["AmsonntagChow"]
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    "torch>=1.13.1",
+    "numpy>=1.22.3",
+    "scikit-learn>=1.2.2",
+    "pandas",
+    "scipy",
+    "reformer-pytorch",
+    "einops",
+]
 
 [tool.setuptools]
 packages = ["fretransformer"]
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
+

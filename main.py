@@ -4,13 +4,13 @@ from sklearn.preprocessing import MinMaxScaler
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from data.data_loader import Dataset_Fin
-from model.Fourier_Transformer import FTransformer
+from fretransformer.data.data_loader import Dataset_Fin
+from fretransformer.model.Fourier_Transformer import FTransformer
 import time
 import os
 import numpy as np
 import pandas as pd
-from utils.utils import save_model, load_model, evaluate
+from fretransformer.utils.utils import save_model, load_model, evaluate
 import random
 import matplotlib.pyplot as plt
 

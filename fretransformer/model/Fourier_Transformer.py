@@ -6,7 +6,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from layers.FTrans import FTrans
+from fretransformer.layers.FTrans import FTrans
 
 class FTransformer(nn.Module):
     def __init__(self, configs):

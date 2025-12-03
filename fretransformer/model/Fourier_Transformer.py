@@ -40,7 +40,8 @@ class FTransformer(nn.Module):
                 nn.LeakyReLU(),
                 nn.Linear(self.hidden_size, self.enc_in)
             )
-        self.to('cuda:0')
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.to(device)
 
     def tokenEmb(self, x):
         x = x.unsqueeze(3)
@@ -66,7 +67,7 @@ class FTransformer(nn.Module):
         # x = x.reshape(-1, N)
 
         # fourier Transformer
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = next(self.parameters()).device
         model = FTrans(self.configs).to(device)
         
         dec_inp = torch.fft.rfft(dec_inp, dim=1, norm='ortho')

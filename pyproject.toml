@@ -13,6 +13,8 @@ dependencies = [
     "scipy",
     "reformer-pytorch",
     "einops",
+    "pytest",
+    "seaborn",
 ]
 
 [tool.setuptools]

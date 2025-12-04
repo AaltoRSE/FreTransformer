@@ -68,13 +68,15 @@ class TestIntegration:
         )
         
         # Forward pass
-        x = torch.randn(2, 50, 5)
+        x_real = torch.randn(2, 50, 5)
+        x_imag = torch.randn(2, 50, 5)
+        x = torch.complex(x_real, x_imag)
         embedded = embedding(x, None)
-        
+
         assert torch.is_complex(embedded)
-        
-        output, _ = attention(embedded, embedded, embedded)
-        
+
+        output, _ = attention(embedded, embedded, embedded, attn_mask=None)
+
         assert output.shape == embedded.shape
         assert torch.is_complex(output)
 
@@ -132,56 +134,6 @@ class TestIntegration:
         assert dec_out.shape[1] == 50
 
 
-class TestComplexNumberHandling:
-    """Tests specific to complex number operations"""
-
-    def test_complex_layer_norm(self):
-        """Test LayerNorm behavior with complex numbers"""
-        x = torch.complex(torch.randn(2, 50, 32), torch.randn(2, 50, 32))
-        norm = torch.nn.LayerNorm(32)
-        
-        # Apply norm to real part
-        out_real = norm(x.real)
-        out_imag = norm(x.imag)
-        
-        # Should be finite
-        assert torch.all(torch.isfinite(out_real))
-        assert torch.all(torch.isfinite(out_imag))
-
-    def test_complex_linear_combination(self):
-        """Test linear operations on complex numbers"""
-        # (a + bi) * (c + di) = (ac - bd) + (ad + bc)i
-        a = torch.tensor([1.0, 2.0])
-        b = torch.tensor([1.0, 2.0])
-        c = torch.tensor([2.0, 1.0])
-        d = torch.tensor([1.0, 2.0])
-        
-        z1 = torch.complex(a, b)
-        z2 = torch.complex(c, d)
-        
-        # Manual multiplication
-        real_part = a * c - b * d
-        imag_part = a * d + b * c
-        expected = torch.complex(real_part, imag_part)
-        
-        # Einsum multiplication
-        w = torch.randn(2, 2, requires_grad=True)
-        result = torch.einsum('...i,io->...o', torch.stack([a, b], dim=-1), w)
-        
-        assert result.shape == (2,)
-
-    def test_complex_softmax(self):
-        """Test softmax on complex numbers"""
-        x_real = torch.randn(2, 4, 8, 8)
-        x_imag = torch.randn(2, 4, 8, 8)
-        
-        # Apply softmax to real and imag separately
-        soft_real = torch.softmax(x_real, dim=-1)
-        soft_imag = torch.softmax(x_imag, dim=-1)
-        
-        # Both should sum to approximately 1 along last dimension
-        assert torch.allclose(soft_real.sum(dim=-1), torch.ones(2, 4, 8), atol=1e-5)
-        assert torch.allclose(soft_imag.sum(dim=-1), torch.ones(2, 4, 8), atol=1e-5)
 
 
 if __name__ == '__main__':

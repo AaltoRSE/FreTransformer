@@ -1,5 +1,5 @@
 *.egg-info
- dist
- __pycache__
- *.pyc
- .pytest_cache
+dist
+**/__pycache__/
+*.pyc
+.pytest_cache

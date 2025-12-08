@@ -73,8 +73,8 @@ class FTransformer(nn.Module):
         dec_inp = torch.fft.rfft(dec_inp, dim=1, norm='ortho')
         pre = self.configs.pre_length//2+1
         label = self.configs.label_len//2+1
-        dec_inp = torch.zeros_like(dec_inp[:, -pre:, :])
-        dec_inp = torch.cat([dec_inp[:, :label, :], dec_inp], dim=1).to(device)
+        zeros = torch.zeros_like(dec_inp[:, -pre:, :])
+        dec_inp = torch.cat([dec_inp[:, :label, :], zeros], dim=1).to(device)
         # x = model(x,None, dec_inp, None)
         x = self.ftrans(x, None, dec_inp, None)
 

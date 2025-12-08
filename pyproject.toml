@@ -15,6 +15,7 @@ dependencies = [
     "einops",
     "pytest",
     "seaborn",
+    "yfinance",
 ]
 
 [tool.setuptools]

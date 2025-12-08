@@ -1,4 +1,4 @@
-
+import numpy as np
 import argparse
 from sklearn.preprocessing import MinMaxScaler
 import torch
@@ -18,6 +18,23 @@ fix_seed = 9999
 random.seed(fix_seed)
 torch.manual_seed(fix_seed)
 np.random.seed(fix_seed)
+
+
+def print_variation(name, tensor):
+    arr = tensor.detach().cpu().numpy()
+    if arr.shape[0] > 1:
+        # Handle 3D (batch, time, features), 2D (batch, features) or (batch, time)
+        if arr.ndim == 3:
+            last_pred = arr[:, -1, -1]
+        elif arr.ndim == 2:
+            last_pred = arr[:, -1]
+        else:
+            last_pred = arr.flatten()
+        mean_abs_diff = np.mean(np.abs(last_pred - last_pred[0]))
+        print(f"{name} - shape: {arr.shape}, mean abs diff of last output value across batch: {mean_abs_diff}")
+    else:
+        print(f"{name} - shape: {arr.shape}, only one sample in batch.")
+
 
 parser = argparse.ArgumentParser(description='=.=.=.=.=.=.===.=')
 parser.add_argument('--data', type=str, default='Fin', help='data set')
@@ -119,7 +136,8 @@ val_dataloader = DataLoader(
     drop_last=False
 )
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device(device if torch.cuda.is_available() else "cpu")
+print("DEVICE:", device)
 model = FTransformer(args).to(device)
 my_optim = torch.optim.RMSprop(params=model.parameters(), lr=args.learning_rate, eps=1e-08)
 my_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=my_optim, gamma=args.decay_rate)
@@ -145,21 +163,24 @@ def get_gradients(model):
     return gradients
 
 def validate(model, vali_loader):
-    model.eval()
+    #model.eval()
     cnt = 0
     loss_total = 0
     preds = []
     trues = []
     for i, (x, y) in enumerate(vali_loader):
         cnt += 1
-        y = y.float().to("cuda:0")
-        x = x.float().to("cuda:0")
+        y = y.float().to(device)
+        x = x.float().to(device)
+        print_variation("Validation input x", x)
+        print_variation("Validation input y", y)
         # decoder input
         dec_inp = y
         # dec_inp = torch.zeros_like(y[:, -args.pre_length:, :]).float()
         # dec_inp = torch.cat([y[:, :args.label_len, :], dec_inp], dim=1).float().to(device)
         ##here for Transformer
         forecast = model(x, dec_inp)
+        print_variation("Validation model output", forecast)
         # forecast = model(x)
         # y = y.permute(0, 2, 1).contiguous().to(device)
         loss = forecast_loss(forecast, y)
@@ -169,12 +190,9 @@ def validate(model, vali_loader):
         y = y.detach().cpu().numpy()  # .squeeze()
         preds.append(forecast)
         trues.append(y)
-    preds = np.array(preds)
-    trues = np.array(trues)
     preds = np.concatenate(preds, axis=0)
-    trues = np.concatenate(trues, axis=0)    
+    trues = np.concatenate(trues, axis=0)
 
-    
     score = evaluate(trues, preds)
     print(f'RAW : MAPE {score[0]:7.9%}; MAE {score[1]:7.9f}; RMSE {score[2]:7.9f};MSE {score[3]:7.9f};ic {score[4]:7.9f};rank_ic {score[5]:7.9f}.train.')
     model.train()
@@ -187,8 +205,8 @@ def test():
     preds = []
     trues = []
     for index, (x, y) in enumerate(test_dataloader):
-        y = y.float().to("cuda:0")
-        x = x.float().to("cuda:0")
+        y = y.float().to(device)
+        x = x.float().to(device)
         # decoder input
         dec_inp = torch.zeros_like(y[:, -args.pre_length:, :]).float()
         dec_inp = torch.cat([y[:, :args.label_len, :], dec_inp], dim=1).float().to(device)
@@ -200,8 +218,6 @@ def test():
         y = y.detach().cpu().numpy()  # .squeeze()
         preds.append(forecast)
         trues.append(y)
-    preds = np.array(preds)
-    trues = np.array(trues)
     preds = np.concatenate(preds, axis=0)
     trues = np.concatenate(trues, axis=0)
     # preds_reshaped = preds.reshape(-1, 5)
@@ -215,6 +231,7 @@ def test():
     # df2.to_csv('output/Fin/trues.csv')
     score = evaluate(trues, preds)
     print(f'RAW : MAPE {score[0]:7.9%}; MAE {score[1]:7.9f}; RMSE {score[2]:7.9f};MSE {score[3]:7.9f};ic {score[4]:7.9f};rank_ic {score[5]:7.9f}.test.')
+
 
 if __name__ == '__main__':
 
@@ -238,12 +255,15 @@ if __name__ == '__main__':
 
             y = y.float().to(device)
             x = x.float().to(device)
+            print_variation("Train input x", x)
+            print_variation("Train input y", y)
 
             # decoder input
             dec_inp = y
 
             ##here for Fre-Transformer
-            forecast = model(x, dec_inp)[0]
+            forecast = model(x, dec_inp)
+            print_variation("Train model output", forecast)
             
             
             # forecast = model(x)
@@ -262,7 +282,7 @@ if __name__ == '__main__':
                 epoch_gradients[name].append(grad)
             
             my_optim.step()
-            loss_total += float(loss)
+            loss_total += loss.detach().item()
         
         for name in all_gradients.keys():
             all_gradients[name].append(np.mean(epoch_gradients[name], axis=0))

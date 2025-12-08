@@ -85,7 +85,7 @@ def load_model(model_dir, epoch=None):
     if not os.path.exists(file_name):
         return
     with open(file_name, 'rb') as f:
-        model = torch.load(f)
+        model = torch.load(f, weights_only=False)
     return model
 
 def masked_MAPE(v, v_, axis=None):

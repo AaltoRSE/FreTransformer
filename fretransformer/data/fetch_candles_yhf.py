@@ -4,7 +4,7 @@ start_date = "2000-01-01"
 end_date = "2023-11-01"
 stock = "^GSPC"
 
-data = yf.download(stock, start=start_date, end=end_date)
+data = yf.download(stock, start=start_date, end=end_date, auto_adjust=False)
 
 data = data.reset_index()
 
